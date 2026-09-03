@@ -45,7 +45,7 @@ terms.curvature = trapz(candidate.timestampsS, candidate.curvaturesPerM.^2);
 terms.jerk = trapz(candidate.timestampsS, jerk.^2);
 terms.progress = max(0, scenario.goalPositionWorldM(1) - p(end,1))/cfg.scenario.roadLengthM;
 terms.routeDeviation = trapz(candidate.timestampsS, p(:,2).^2)/cfg.horizon;
-terms.time = 1/max(mean(candidate.speedsMps), 0.25);
+terms.time = 1/max(candidate.speedsMps(end), 0.25);
 candidate.costTerms = terms;
 
 names = fieldnames(terms);

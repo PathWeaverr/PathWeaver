@@ -6,7 +6,7 @@ cfg.dt = 0.05;
 cfg.replanInterval = 0.15;
 cfg.horizon = 3.0;
 cfg.planDt = 0.20;
-cfg.maxSimulationTime = 28;
+cfg.maxSimulationTime = 32;
 cfg.goalToleranceM = 3;
 
 cfg.ego.lengthM = 4.2;
@@ -14,7 +14,7 @@ cfg.ego.widthM = 1.8;
 cfg.ego.wheelbaseM = 2.7;
 cfg.ego.maxSteeringRad = deg2rad(30);
 cfg.ego.maxSteeringRateRadps = deg2rad(50);
-cfg.ego.maxAccelerationMps2 = 2.0;
+cfg.ego.maxAccelerationMps2 = 2.8;
 cfg.ego.minAccelerationMps2 = -5.5;
 cfg.ego.maxCurvaturePerM = tan(cfg.ego.maxSteeringRad)/cfg.ego.wheelbaseM;
 
@@ -34,8 +34,8 @@ cfg.planner.staticMarginM = 0.35;
 cfg.planner.dynamicMarginM = 0.30;
 cfg.planner.weights = struct( ...
     'dynamicRisk', 28, 'staticObstacle', 12, 'boundary', 8, ...
-    'smoothness', 1.2, 'curvature', 2.0, 'jerk', 0.4, ...
-    'progress', 5.0, 'routeDeviation', 0.35, 'time', 0.15);
+    'smoothness', 0.25, 'curvature', 2.0, 'jerk', 0.15, ...
+    'progress', 20.0, 'routeDeviation', 0.35, 'time', 5.0);
 
 cfg.behavior.emergencyTtcS = 0.75;
 cfg.behavior.yieldTtcS = 3.5;

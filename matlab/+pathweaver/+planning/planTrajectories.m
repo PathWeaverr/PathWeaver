@@ -1,7 +1,7 @@
 function output = planTrajectories(world, predictions, scenario, cfg)
 %PLANTRAJECTORIES Generate, score, and deterministically select candidates.
 timer = tic;
-lateralTargets = cfg.planner.lateralTargetsM;
+lateralTargets = unique([cfg.planner.lateralTargetsM world.ego.positionWorldM(2)], 'stable');
 targetSpeeds = cfg.planner.routeSpeedMps*cfg.planner.speedFractions;
 count = numel(lateralTargets)*numel(targetSpeeds);
 candidate = pathweaver.planning.generateCandidate(world.ego, 0, 0, cfg);
