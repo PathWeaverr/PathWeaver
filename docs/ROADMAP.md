@@ -1,9 +1,9 @@
 # Roadmap
 
-## Phase 0 — executable foundation
+## Phase 0 — executable foundation (completed for v0.1)
 
-Provision MATLAB, complete product/API preflight, implement and verify the
-MATLAB-only vertical slice, deterministic replay, tests, visuals, and metrics.
+MATLAB provisioning, API preflight, the vertical slice, deterministic replay,
+tests, visuals, metrics, and a Simulink replay harness are complete.
 
 ## Phase 1 — MathWorks integration
 

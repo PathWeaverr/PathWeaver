@@ -1,7 +1,7 @@
 # Algorithm design
 
-This is an implementation-ready mathematical specification, not evidence of an
-executed implementation.
+This documents the implemented MATLAB algorithms. Configuration values remain
+authoritative in `config/defaultConfig.m`.
 
 ## Prediction
 
@@ -90,7 +90,7 @@ calculation differ.
 
 ## Behaviour
 
-Planned states are `CRUISE`, `FOLLOW`, `YIELD`, `AVOID`, `EMERGENCY_BRAKE`,
+Implemented states are `CRUISE`, `FOLLOW`, `YIELD`, `AVOID`, `EMERGENCY_BRAKE`,
 `GOAL_REACHED`, and `COLLISION`. Collision and goal are terminal. Emergency is
 entered when no feasible candidate exists, hard TTC is crossed, or required
 deceleration exceeds the emergency threshold. It exits only after a larger TTC

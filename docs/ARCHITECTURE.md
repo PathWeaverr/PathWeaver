@@ -6,8 +6,8 @@ PathWeaver v0.1 consumes simulated world-state data. Multi-sensor perception,
 detection and sensor fusion are planned for later versions and are not claimed
 by this prototype.
 
-This document is the target architecture. It has not yet been implemented or
-executed because MATLAB is unavailable in the current environment.
+This architecture is implemented by the MATLAB closed loop. The Simulink model
+is a generated replay integration boundary, not a duplicate planner.
 
 ## Data flow
 

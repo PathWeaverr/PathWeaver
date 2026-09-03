@@ -1,53 +1,58 @@
 # PathWeaver
 
-> Logo placeholder: `media/pathweaver-logo.png` (not yet created)
+> Logo location: `media/pathweaver-logo.png` (placeholder)
 
 PathWeaver is a MATLAB-first, lane-agnostic, risk-aware navigation prototype for
 Smart India Hackathon 2026 problem statement **SIH26037**, “Adaptive Path
 Planning and Collision Avoidance for Autonomous Vehicles on Unstructured Indian
-Roads.” Its core insight is: **do not plan only around where road users are;
-plan around where they might be.**
+Roads.”
 
-## Current status
+**Core insight:** Do not plan only around where road users are. Plan around where
+they might be.
 
-**Design-only fallback; not runnable.** MATLAB and RoadRunner were unavailable
-during the 2026-09-03 environment preflight. In accordance with the project
-policy, no substitute implementation was created and no unexecuted code,
-telemetry, metric, visual, Simulink model, or RoadRunner asset is presented as
-working. See [Environment](docs/ENVIRONMENT.md) and
-[Implementation plan](docs/IMPLEMENTATION_PLAN.md).
+## What v0.1 implements
+
+- Deterministic `village_crossing` with an irregular unmarked road, explicit
+  boundaries, pedestrian, oncoming two-wheeler, pothole, and goal.
+- Explicit simulated-world-state adapter and documented data contracts.
+- Class-conditioned constant-velocity prediction for pedestrians,
+  two-wheelers, cars, and animals with expanding PSD covariance.
+- Time-aligned Mahalanobis risk scores and hard footprint constraints.
+- Smooth lateral/longitudinal sampling with 20+ genuine candidates.
+- Nine separately inspectable planner cost terms and deterministic selection.
+- Seven-state behaviour logic with transition logs and emergency hysteresis.
+- Pure-pursuit-style steering, bounded PI speed control, emergency override, and
+  kinematic-bicycle motion in a closed loop.
+- Dark live technical visualisation and optional MP4 recording.
+- Paired baseline/risk-aware evaluation with MAT, CSV, and figure export.
+- Reproducibly generated and runnable Simulink replay integration model.
+- Fifteen automated MATLAB unit/integration tests.
 
 PathWeaver v0.1 consumes simulated world-state data. Multi-sensor perception,
 detection and sensor fusion are planned for later versions and are not claimed
 by this prototype.
 
-## Intended vertical slice
-
-The planned `village_crossing` simulation contains an irregular unmarked road,
-explicit free-space boundaries, ego vehicle, delayed pedestrian crossing,
-oncoming two-wheeler, pothole, and goal. It will connect class-conditioned
-constant-velocity prediction and expanding uncertainty to time-indexed dynamic
-risk, sampled trajectories, deterministic behaviour, closed-loop control,
-measured metrics, and technical visualisation.
-
-It will not claim camera/LiDAR/radar processing, sensor fusion, trained machine
-learning, Hybrid A*, MPC, road-ready dynamics, or native RoadRunner integration
-unless those capabilities are later implemented and verified.
+It does not implement camera/LiDAR/radar processing, trained machine learning,
+Hybrid A*, model-predictive control, production vehicle dynamics, or native
+RoadRunner integration.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Scenario --> Adapter[Scenario / Perception Adapter]
-    Adapter --> World[World Model]
-    World --> Prediction
-    Prediction --> Risk[Dynamic Risk]
-    Risk --> Planner[Behaviour + Trajectory Planner]
-    World --> Planner
-    Planner --> Controller
-    Controller --> Dynamics[Vehicle Dynamics]
-    Dynamics --> Adapter
-    Planner --> View[Visualisation + Metrics]
+    S[Village scenario] --> A[Scenario / perception adapter]
+    A --> W[World model]
+    W --> P[Class-conditioned prediction]
+    P --> R[Time-indexed risk]
+    W --> B[Behaviour]
+    R --> T[Candidate planner]
+    B --> T
+    T --> C[Trajectory controller]
+    C --> V[Kinematic bicycle]
+    V --> A
+    P --> Z[Visualisation]
+    T --> Z
+    V --> M[Measured metrics]
 ```
 
 See [Architecture](docs/ARCHITECTURE.md) and
@@ -56,53 +61,64 @@ See [Architecture](docs/ARCHITECTURE.md) and
 ## Repository structure
 
 ```text
-matlab/+pathweaver/   planned MATLAB packages
-simulink/             builder and generated-model locations
-roadrunner/           native asset status and port notes
-tests/                planned matlab.unittest suites
-config/               planned deterministic configurations
-docs/                 architecture, algorithms, environment, and roadmap
-media/                screenshot/logo locations; generated video ignored
-artifacts/            ignored evaluation output
+config/                deterministic configurations
+matlab/+pathweaver/    core MATLAB packages
+simulink/              replay-model builder/output location
+tests/                 matlab.unittest suites
+docs/                  design, environment, limitations, and roadmap
+media/                 media notes; generated video is ignored
+artifacts/             ignored demo and evaluation outputs
 ```
 
 ## Prerequisites
 
-MATLAB is mandatory. Minimum toolbox requirements will be established by API
-preflight; the design aims to keep core mathematics MATLAB-only. Simulink is
-required for P1 integration. Automated Driving Toolbox is preferred for scenario
-rendering but must be feature-detected. RoadRunner and Stateflow are optional P2
-features and must never be assumed.
+Verified with MATLAB R2026a Update 5 on Apple silicon macOS. The numerical core
+uses MATLAB only. Simulink is required for its optional integration model. See
+[Environment](docs/ENVIRONMENT.md) for the installed inventory.
 
-## Setup and commands
+## Exact commands
 
-The target commands, to be implemented and verified after MATLAB installation,
-are:
+From MATLAB with this repository as the current folder:
 
 ```matlab
 setupPath
-runPathWeaverDemo
-runPathWeaverEvaluation
-results = runtests('tests','IncludeSubfolders',true);
-assertSuccess(results)
+result = runPathWeaverDemo;
+results = runPathWeaverEvaluation;
+testResults = runPathWeaverTests;
+modelPath = buildPathWeaverModel;
 ```
 
-No exact executable command is presently available because entry points do not
-yet exist. Installation begins by running the preflight in
-`docs/ENVIRONMENT.md`, then following `docs/IMPLEMENTATION_PLAN.md`.
+Headless default demo:
 
-## Evidence placeholders
+```sh
+/Users/shivamkumar/Applications/MathWorks/R2026a.app/bin/matlab -batch "runPathWeaverDemo(visualization=false);"
+```
 
-- Screenshot: unavailable; no simulation has run.
-- Video: unavailable; no simulation has run.
-- Evaluation: unavailable; no measurements have been made.
-- Tests: unavailable; no MATLAB runtime exists on this host.
+Optional recording:
 
-## Roadmap and safety
+```matlab
+runPathWeaverDemo(video=true)
+```
 
-The phased roadmap is in [Roadmap](docs/ROADMAP.md). This is intended as a
-simulation prototype, not a road-ready autonomy system. It has no road-deployment
-validation and must not control a real vehicle.
+Generated MAT, CSV, figures, models, and videos are ignored by Git.
+
+## Current measured status
+
+The default risk-aware seed completes without collision in 26.65 simulated
+seconds. Across ten paired seeds, both modes completed 10/10 runs with zero
+collisions. Mean minimum TTC was 0.098 s for baseline and 0.104 s for risk-aware
+mode; this small difference is reported without claiming decisive superiority.
+Runtime values depend on host load and should be remeasured locally.
+
+All 15 automated tests pass, including default completion and Simulink
+build/update/run. See [Limitations](docs/LIMITATIONS.md) before interpreting these
+simulation-only results.
+
+## Media, roadmap, and safety
+
+Media locations are described in [media/README.md](media/README.md). See the
+[Roadmap](docs/ROADMAP.md) for future work. This is a simulation prototype, not a
+road-ready autonomy system, and must not control a real vehicle.
 
 ## Licence
 

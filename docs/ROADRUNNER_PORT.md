@@ -1,8 +1,8 @@
 # RoadRunner port plan
 
-RoadRunner was unavailable during preflight. No `.rrscene`, project, screenshot,
-or recording has been fabricated. The MATLAB programmatic scenario must be made
-runnable first; this checklist is for a later compatible installation.
+The RoadRunner MATLAB API is present, but its application is absent. No
+`.rrscene`, project, screenshot, or recording has been fabricated. The MATLAB
+scenario is runnable; this checklist is for a later complete installation.
 
 ## Automated checks before GUI work
 

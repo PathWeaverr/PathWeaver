@@ -1,22 +1,20 @@
 # Limitations
 
-## Current repository state
-
-- MATLAB is unavailable, so no executable prototype has been implemented.
-- No test, demonstration, evaluation, planner latency, or safety result exists.
-- Simulink, Stateflow, and toolbox licences cannot be queried.
-- RoadRunner is unavailable and no native integration or fabricated asset exists.
-
-## Intended v0.1 limitations
-
 - Input is simulated actor ground truth, not implemented perception.
 - Agent motion and constant-velocity prediction are simplified.
 - No camera, LiDAR, radar, detection, or sensor fusion is implemented.
-- Prediction is not learned and its risk score is not calibrated probability.
-- Vehicle dynamics are planned as a kinematic bicycle approximation.
-- The initial evaluation covers one scenario family and a small seed set.
-- There is no real-road, hardware-in-the-loop, or road-deployment validation.
-- Hybrid A*, model-predictive control, and production dynamics are out of scope.
-- Native RoadRunner and Stateflow integration remain product-dependent.
+- Prediction is not learned; its risk score is not calibrated probability.
+- Vehicle dynamics use a low-speed kinematic bicycle approximation.
+- Evaluation covers one scenario family and ten paired seeds by default.
+- Measured minimum TTC is low and warrants further safety-margin validation.
+- Both modes completed current seeds, so no statistically meaningful superiority
+  claim is supported by this small evaluation.
+- Simulink is a runnable deterministic replay harness generated from the MATLAB
+  closed loop; prediction/planning do not execute as native blocks.
+- Stateflow is installed, but behaviour remains the tested MATLAB state machine.
+- The RoadRunner API is installed, but its application is absent; no native
+  project, scene, or integration is claimed.
+- There is no real-road, hardware-in-the-loop, or deployment validation.
+- Hybrid A*, MPC, and production-grade dynamics are out of scope.
 
-PathWeaver must not be connected to or used to control a real vehicle.
+PathWeaver must not control a real vehicle.
