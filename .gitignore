@@ -6,6 +6,7 @@ slprj/
 codegen/
 *.mex*
 *.mlappinstall
+*.slxc
 
 # Generated models, results, and recordings
 simulink/models/*.slx

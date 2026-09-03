@@ -19,6 +19,7 @@ curvaturePerM = nan(maxSteps+1,1); behaviorName = strings(maxSteps+1,1);
 selectedEndXWorldM = nan(maxSteps+1,1); selectedEndYWorldM = nan(maxSteps+1,1);
 timeS(1)=0; positions(1,:)=ego.positionWorldM; speedMps(1)=ego.speedMps;
 accelerationMps2(1)=0; steeringRad(1)=0; behaviorName(1)=behavior.name;
+curvaturePerM(1)=0;
 transitions = struct('occurred',{},'timestampS',{},'from',{},'to',{},'reason',{});
 planner = [];
 collision = false; collisionReason = ""; step = 0;
