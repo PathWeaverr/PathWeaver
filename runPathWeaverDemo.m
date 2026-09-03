@@ -17,10 +17,9 @@ else
     cfg.outputDirectory=fullfile(root,'artifacts');
 end
 if ~exist(cfg.outputDirectory,'dir'), mkdir(cfg.outputDirectory); end
-view=[]; cleanup=[];
 if cfg.visualization.enabled
     view=pathweaver.visualization.TechnicalView(cfg);
-    cleanup=onCleanup(@()view.close()); %#ok<NASGU>
+    cleanup=onCleanup(@()view.close());
     callbacks.onStep=@(frame)view.update(frame);
 else
     callbacks.onStep=[];
@@ -32,4 +31,5 @@ fprintf('completed=%d collision=%d time=%.2f s path=%.2f m minTTC=%.2f s\n', ...
     result.completed,result.collision,result.log.timeS(end),result.metrics.pathLengthM,result.metrics.minimumTtcS);
 fprintf('planner latency mean/max = %.2f / %.2f ms\n', ...
     result.metrics.averagePlannerLatencyS*1000,result.metrics.maximumPlannerLatencyS*1000);
+if exist('cleanup','var'), clear cleanup; end
 end

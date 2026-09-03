@@ -98,7 +98,11 @@ points=centre'+2*v*sqrt(max(d,0))*[cos(angle);sin(angle)];
 plot(ax,points(1,:),points(2,:),'Color',color,'LineWidth',0.7);
 end
 function textValue=statusText(frame)
-if frame.collision, textValue="COLLISION";
-elseif frame.behavior.name=="GOAL_REACHED", textValue="COMPLETE";
-else, textValue="RUNNING"; end
+if frame.collision
+    textValue="COLLISION";
+elseif frame.behavior.name=="GOAL_REACHED"
+    textValue="COMPLETE";
+else
+    textValue="RUNNING";
+end
 end

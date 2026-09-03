@@ -25,6 +25,7 @@ function testSimulinkModelWhenAvailable(testCase)
 assumeFalse(testCase,isempty(ver('simulink')));
 modelPath=buildPathWeaverModel();
 verifyTrue(testCase,isfile(modelPath));
-load_system(modelPath); cleanup=onCleanup(@()close_system('pathweaver_v0',0)); %#ok<NASGU>
+load_system(modelPath); cleanup=onCleanup(@()close_system('pathweaver_v0',0));
 set_param('pathweaver_v0','SimulationCommand','update');
+clear cleanup
 end
