@@ -1,0 +1,22 @@
+# MATLAB generated files
+*.asv
+*.autosave
+*.m~
+slprj/
+codegen/
+*.mex*
+*.mlappinstall
+
+# Generated models, results, and recordings
+simulink/models/*.slx
+artifacts/*
+!artifacts/.gitkeep
+media/*.mp4
+media/*.avi
+*.mat
+*.csv
+
+# Platform and editor metadata
+.DS_Store
+*.swp
+*~
