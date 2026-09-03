@@ -2,7 +2,7 @@ function result = runSimulation(cfg, callbacks)
 %RUNSIMULATION Execute deterministic closed-loop simulation.
 arguments
     cfg (1,1) struct
-    callbacks.onStep = []
+    callbacks (1,1) struct = struct('onStep', [])
 end
 scenario = pathweaver.scenario.createVillageCrossing(cfg);
 ego = cfg.scenario.egoInitial;
