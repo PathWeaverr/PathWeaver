@@ -1,7 +1,7 @@
 function modelPath = buildPathWeaverModel()
 %BUILDPATHWEAVERMODEL Generate runnable deterministic Simulink replay harness.
 root=setupPath();
-assert(license('test','Simulink')==1,'PathWeaver:SimulinkUnavailable','Simulink licence unavailable.');
+assert(~isempty(ver('simulink')),'PathWeaver:SimulinkUnavailable','Simulink is unavailable.');
 pathweaver.simulation.prepareSimulinkReplay(2);
 modelName='pathweaver_v0';
 modelDirectory=fullfile(root,'simulink','models');
