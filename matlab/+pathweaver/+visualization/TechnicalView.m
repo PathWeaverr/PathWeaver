@@ -23,7 +23,7 @@ classdef TechnicalView < handle
             if cfg.visualization.video
                 if ~exist(cfg.outputDirectory,'dir'), mkdir(cfg.outputDirectory); end
                 obj.Video = VideoWriter(fullfile(cfg.outputDirectory,'pathweaver_demo.mp4'),'MPEG-4');
-                obj.Video.FrameRate = 20;
+                obj.Video.FrameRate = 10;
                 open(obj.Video);
             end
         end

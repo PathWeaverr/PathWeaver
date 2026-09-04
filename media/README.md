@@ -1,5 +1,6 @@
 # Media
 
-Place approved screenshots here. Demo videos are generated artifacts and are
-ignored by Git. Use `runPathWeaverDemo(video=true)` to record actual telemetry;
-no generated screenshot or recording is committed by default.
+`pathweaver-logo.png` is the project opening mark. Demo videos and pitch frames
+are generated artifacts and remain ignored by Git. Run
+`recordPathWeaverEvidence` to regenerate the complete evidence package, then use
+`docs/VIDEO_SCRIPT.md` for the exact edit.
