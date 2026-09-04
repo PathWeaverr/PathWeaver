@@ -26,7 +26,10 @@ they might be.
 - Dark live technical visualisation and optional MP4 recording.
 - Paired baseline/risk-aware evaluation with MAT, CSV, and figure export.
 - Reproducibly generated and runnable Simulink replay integration model.
-- Fifteen automated MATLAB unit/integration tests.
+- Programmatically generated Stateflow chart with direct-transition equivalence
+  tests against the MATLAB behaviour logic.
+- Reproducible pitch slides, evidence recording, and production script.
+- Sixteen automated MATLAB unit/integration tests.
 
 PathWeaver v0.1 consumes simulated world-state data. Multi-sensor perception,
 detection and sensor fusion are planned for later versions and are not claimed
@@ -86,6 +89,8 @@ result = runPathWeaverDemo;
 results = runPathWeaverEvaluation;
 testResults = runPathWeaverTests;
 modelPath = buildPathWeaverModel;
+behaviorModelPath = buildPathWeaverStateflowModel;
+recordPathWeaverEvidence(teamName="Team PathWeaver");
 ```
 
 Headless default demo:
@@ -110,13 +115,14 @@ collisions. Mean minimum TTC was 0.098 s for baseline and 0.104 s for risk-aware
 mode; this small difference is reported without claiming decisive superiority.
 Runtime values depend on host load and should be remeasured locally.
 
-All 15 automated tests pass, including default completion and Simulink
-build/update/run. See [Limitations](docs/LIMITATIONS.md) before interpreting these
+All automated tests pass, including default completion, Simulink execution, and
+Stateflow decision equivalence. See [Limitations](docs/LIMITATIONS.md) before interpreting these
 simulation-only results.
 
 ## Media, roadmap, and safety
 
-Media locations are described in [media/README.md](media/README.md). See the
+The exact 94-second edit is in [Video script](docs/VIDEO_SCRIPT.md), and media
+locations are described in [media/README.md](media/README.md). See the
 [Roadmap](docs/ROADMAP.md) for future work. This is a simulation prototype, not a
 road-ready autonomy system, and must not control a real vehicle.
 

@@ -44,8 +44,9 @@ exceeded the `license` function's length limit. Neither is used by the prototype
 | `sfroot` | found in Stateflow |
 | `roadrunner` | MATLAB API found |
 
-No RoadRunner application bundle exists in the MathWorks installation or
-`/Applications`; the API alone cannot provide native integration.
+No RoadRunner application bundle exists. MathWorks lists RoadRunner as
+[unsupported and unavailable for macOS](https://www.mathworks.com/support/requirements/roadrunner.html);
+the API alone cannot provide integration.
 
 ## Verification command
 

@@ -7,9 +7,9 @@ tests, visuals, metrics, and a Simulink replay harness are complete.
 
 ## Phase 1 — MathWorks integration
 
-Add a reproducibly generated, runnable Simulink model sharing the tested MATLAB
-algorithms. Add Stateflow only with equivalence tests. Integrate RoadRunner only
-after supported native APIs are detected and exercised.
+Replace the runnable Simulink replay harness with native subsystem execution.
+Extend the generated Stateflow chart from direct-decision equivalence to full
+sequence/dwell equivalence. Integrate RoadRunner on supported Windows/Linux.
 
 ## Phase 2 — scenario breadth and robustness
 

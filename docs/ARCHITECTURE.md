@@ -7,7 +7,8 @@ detection and sensor fusion are planned for later versions and are not claimed
 by this prototype.
 
 This architecture is implemented by the MATLAB closed loop. The Simulink model
-is a generated replay integration boundary, not a duplicate planner.
+is a generated replay integration boundary. A generated Stateflow chart verifies
+direct behaviour decisions, while the closed loop retains MATLAB dwell memory.
 
 ## Data flow
 

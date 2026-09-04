@@ -4,6 +4,11 @@ The RoadRunner MATLAB API is present, but its application is absent. No
 `.rrscene`, project, screenshot, or recording has been fabricated. The MATLAB
 scenario is runnable; this checklist is for a later complete installation.
 
+RoadRunner cannot be installed on this development Mac because MathWorks does
+not [support RoadRunner on macOS](https://www.mathworks.com/support/requirements/roadrunner.html).
+Perform the following steps on a compatible Windows or Ubuntu workstation with
+the required entitlement.
+
 ## Automated checks before GUI work
 
 1. Record MATLAB and RoadRunner versions and licence results.

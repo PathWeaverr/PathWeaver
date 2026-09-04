@@ -99,6 +99,11 @@ vulnerable road users; avoid indicates a feasible lateral manoeuvre; follow
 indicates constrained forward progress. All transitions log time, old/new state,
 and measured reason. Threshold pairs and dwell periods prevent flicker.
 
+`buildPathWeaverStateflowModel` generates the same seven named states and checks
+direct decisions against the MATLAB function. The closed loop retains MATLAB as
+the authority because its emergency-clear transition includes dwell-time memory
+not yet covered by sequence-level Stateflow equivalence.
+
 ## Controller and dynamics
 
 Pure-pursuit-style steering selects a speed-dependent look-ahead point on the

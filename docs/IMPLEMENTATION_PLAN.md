@@ -13,14 +13,17 @@
 7. Ten paired seeds evaluated in baseline and risk-aware modes.
 8. Fifteen unit/integration tests passed.
 9. Simulink replay model generated, updated, and run programmatically.
+10. Seven-state Stateflow chart generated and checked against MATLAB decisions.
+11. Reproducible pitch frames, MP4 evidence capture, and edit script generated.
 
 ## Remaining product-dependent work
 
-- Install the RoadRunner application and follow `ROADRUNNER_PORT.md`.
+- Move to supported Windows/Linux, install RoadRunner, and follow
+  `ROADRUNNER_PORT.md`; RoadRunner is unavailable on macOS.
 - Replace the Simulink replay harness with native subsystem execution only after
   numerical equivalence tests are in place.
-- Migrate behaviour to Stateflow only after chart-generation and transition
-  equivalence are verified.
+- Move closed-loop dwell-time memory into Stateflow after sequence-level
+  equivalence tests; direct decision equivalence is already verified.
 
 ## Next engineering gates
 

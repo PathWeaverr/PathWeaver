@@ -11,9 +11,11 @@
   claim is supported by this small evaluation.
 - Simulink is a runnable deterministic replay harness generated from the MATLAB
   closed loop; prediction/planning do not execute as native blocks.
-- Stateflow is installed, but behaviour remains the tested MATLAB state machine.
-- The RoadRunner API is installed, but its application is absent; no native
-  project, scene, or integration is claimed.
+- A seven-state Stateflow chart is generated and tested for direct decision
+  equivalence. The closed-loop simulation still uses the MATLAB state machine,
+  whose emergency-clear logic includes additional dwell-time memory.
+- The RoadRunner API is installed, but RoadRunner is unsupported on macOS; no
+  native project, scene, or integration is claimed.
 - There is no real-road, hardware-in-the-loop, or deployment validation.
 - Hybrid A*, MPC, and production-grade dynamics are out of scope.
 
