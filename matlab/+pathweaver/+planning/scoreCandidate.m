@@ -6,8 +6,8 @@ finiteSignals = [p candidate.headingsRad candidate.speedsMps ...
 if any(~isfinite(finiteSignals), 'all')
     candidate = reject(candidate, "nonfinite trajectory"); return
 end
-footprintMargin = cfg.ego.widthM/2;
-if any(~pathweaver.core.isDrivable(p, footprintMargin, cfg.scenario))
+[roadClearance,boundaryClearance]=pathweaver.core.boundaryClearance(p,candidate.headingsRad,cfg);
+if roadClearance<=0
     candidate = reject(candidate, "drivable boundary violation"); return
 end
 if any(candidate.accelerationsMps2 > cfg.ego.maxAccelerationMps2 + 1e-6) || ...
@@ -18,24 +18,31 @@ if any(abs(candidate.curvaturesPerM) > cfg.ego.maxCurvaturePerM)
     candidate = reject(candidate, "curvature limit"); return
 end
 jerk = gradient(candidate.accelerationsMps2, cfg.planDt);
-if any(abs(jerk) > cfg.planner.maxJerkMps3)
+steering=atan(cfg.ego.wheelbaseM*candidate.curvaturesPerM);
+if any(abs(diff(steering)./diff(candidate.timestampsS))>cfg.ego.maxSteeringRateRadps+1e-8)
+    candidate=reject(candidate,"steering rate limit"); return
+end
+% Emergency braking retains physical constraints; comfort jerk is soft only.
+if ~candidate.isEmergencyBraking && any(abs(jerk) > cfg.planner.maxJerkMps3)
     candidate = reject(candidate, "jerk limit"); return
 end
 
 obstacle = scenario.staticObstacles;
-egoRadius = cfg.ego.widthM/2;
-clearance = vecnorm(p - obstacle.positionWorldM, 2, 2) - ...
-    obstacle.geometry.radiusM - egoRadius;
-if any(clearance <= cfg.planner.staticMarginM)
+[centres,egoRadius]=pathweaver.core.egoFootprint(p,candidate.headingsRad,cfg);
+clearance=inf(size(p,1),1);
+for j=1:3
+    clearance=min(clearance,vecnorm(centres(:,:,j)-obstacle.positionWorldM,2,2)-obstacle.geometry.radiusM-egoRadius);
+end
+if pathweaver.core.sweptClearance(p,candidate.headingsRad,obstacle.positionWorldM, ...
+        obstacle.geometry.radiusM,cfg)<=cfg.planner.staticMarginM
     candidate = reject(candidate, "static obstacle collision"); return
 end
-[dynamicRisk, dynamicCollision] = pathweaver.planning.dynamicRisk(p, predictions, cfg);
+[dynamicRisk, dynamicCollision] = pathweaver.planning.dynamicRisk(p, predictions, cfg, ...
+    candidate.timestampsS,candidate.headingsRad);
 if dynamicCollision
     candidate = reject(candidate, "dynamic occupancy collision"); return
 end
 
-[leftY, rightY] = pathweaver.core.roadBounds(p(:,1), cfg.scenario);
-boundaryClearance = min(leftY - p(:,2), p(:,2) - rightY) - footprintMargin;
 terms = candidate.costTerms;
 terms.dynamicRisk = dynamicRisk;
 terms.staticObstacle = trapz(candidate.timestampsS, 1./max(clearance, 0.1).^2);

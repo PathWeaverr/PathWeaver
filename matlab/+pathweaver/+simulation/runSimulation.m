@@ -1,81 +1,71 @@
 function result = runSimulation(cfg, callbacks)
-%RUNSIMULATION Execute deterministic closed-loop simulation.
+%RUNSIMULATION Fixed-step closed loop; display never advances simulation time.
 arguments
     cfg (1,1) struct
     callbacks (1,1) struct = struct('onStep', [])
 end
-scenario = pathweaver.scenario.createVillageCrossing(cfg);
-ego = cfg.scenario.egoInitial;
-behavior = pathweaver.behavior.initialState();
-controller = pathweaver.control.initialControllerState();
-maxSteps = ceil(cfg.maxSimulationTime/cfg.dt);
-replanSteps = max(1, round(cfg.replanInterval/cfg.dt));
-
-timeS = nan(maxSteps+1,1); positions = nan(maxSteps+1,2);
-speedMps = nan(maxSteps+1,1); accelerationMps2 = nan(maxSteps+1,1);
-steeringRad = nan(maxSteps+1,1); riskScore = nan(maxSteps+1,1);
-ttcS = nan(maxSteps+1,1); latencyS = nan(maxSteps+1,1);
-curvaturePerM = nan(maxSteps+1,1); behaviorName = strings(maxSteps+1,1);
-selectedEndXWorldM = nan(maxSteps+1,1); selectedEndYWorldM = nan(maxSteps+1,1);
-timeS(1)=0; positions(1,:)=ego.positionWorldM; speedMps(1)=ego.speedMps;
-accelerationMps2(1)=0; steeringRad(1)=0; behaviorName(1)=behavior.name;
-curvaturePerM(1)=0;
-transitions = struct('occurred',{},'timestampS',{},'from',{},'to',{},'reason',{});
-planner = [];
-collision = false; collisionReason = ""; step = 0;
-
-while step < maxSteps
-    step = step + 1;
-    scenario = pathweaver.scenario.advanceAgents(scenario, ego, cfg.dt, cfg);
-    world = pathweaver.scenario.worldState(scenario, ego);
-    if isempty(planner) || mod(step-1, replanSteps) == 0
-        predictions = pathweaver.prediction.predictAgents( ...
-            world.agents, world.timestampS, cfg);
-        planner = pathweaver.planning.planTrajectories(world, predictions, scenario, cfg);
+assert(cfg.maxSimulationTime>=cfg.dt && cfg.dt>0 && ...
+    abs(cfg.planDt/cfg.dt-round(cfg.planDt/cfg.dt))<1e-8, ...
+    'PathWeaver:Timing','Require positive duration and planDt divisible by dt.');
+scenario=pathweaver.scenario.createVillageCrossing(cfg); initialScenario=scenario;
+ego=cfg.scenario.egoInitial; behavior=pathweaver.behavior.initialState();
+controller=pathweaver.control.initialControllerState();
+maxSteps=floor(cfg.maxSimulationTime/cfg.dt); replanSteps=max(1,round(cfg.replanInterval/cfg.dt));
+names={'timeS','xWorldM','yWorldM','speedMps','accelerationMps2','steeringRad', ...
+    'curvaturePerM','riskScore','minimumTtcS','planningLatencyS', ...
+    'selectedEndXWorldM','selectedEndYWorldM','minimumClearanceM','headingRad'};
+data=nan(maxSteps+1,numel(names)); behaviorName=strings(maxSteps+1,1);
+transitions=struct('occurred',{},'timestampS',{},'from',{},'to',{},'reason',{});
+planningTimes=zeros(0,2); planner=[]; runTimer=tic;
+[collision,collisionReason,clearance]=pathweaver.simulation.detectCollision(ego,scenario,cfg);
+ttc=pathweaver.planning.minimumTtc(ego,scenario.agents,cfg.horizon,cfg,scenario.staticObstacles);
+data(1,:)=[ego.timestampS ego.positionWorldM ego.speedMps ego.accelerationMps2 ...
+    ego.steeringRad 0 NaN ttc NaN NaN NaN clearance ego.headingRad];
+behaviorName(1)=behavior.name; completed=false;
+for step=1:maxSteps
+    scenario=pathweaver.scenario.advanceAgents(scenario,ego,0,cfg);
+    world=pathweaver.scenario.worldState(scenario,ego);
+    if isempty(planner) || mod(step-1,replanSteps)==0
+        timer=tic;
+        predictions=pathweaver.prediction.predictAgents(world.agents,world.timestampS,cfg);
+        planner=pathweaver.planning.planTrajectories(world,predictions,scenario,cfg);
+        planner.planningLatencyS=toc(timer);
+        planner.timestampS=world.timestampS;
+        planningTimes(end+1,:)=[world.timestampS planner.planningLatencyS]; %#ok<AGROW>
     end
-    [collisionNow, ~] = pathweaver.simulation.detectCollision(ego, scenario, cfg);
-    [behavior, transition] = pathweaver.behavior.updateState( ...
-        behavior, planner, world, scenario, collisionNow, cfg);
-    planner.behaviorState = behavior.name;
-    if transition.occurred
-        transitions(end+1) = transition; %#ok<AGROW>
+    planner.minimumTtcS=pathweaver.planning.minimumTtc(ego,world.agents,cfg.horizon,cfg,scenario.staticObstacles);
+    [behavior,transition]=pathweaver.behavior.updateState(behavior,planner,world,scenario,collision,cfg);
+    if transition.occurred, transitions(end+1)=transition; end %#ok<AGROW>
+    emergency=planner.emergencyFlag || behavior.name=="EMERGENCY_BRAKE";
+    [command,controller]=pathweaver.control.trackTrajectory(ego,planner.selectedTrajectory,emergency,controller,cfg);
+    previousEgo=ego; previousScenario=scenario;
+    ego=pathweaver.control.updateBicycle(ego,command,cfg.dt,cfg);
+    scenario=pathweaver.scenario.advanceAgents(scenario,previousEgo,cfg.dt,cfg);
+    [collision,collisionReason,clearance]=pathweaver.simulation.detectCollision(ego,scenario,cfg,previousEgo,previousScenario);
+    world=pathweaver.scenario.worldState(scenario,ego);
+    planner.minimumTtcS=pathweaver.planning.minimumTtc(ego,world.agents,cfg.horizon,cfg,scenario.staticObstacles);
+    completed=~collision && norm(ego.positionWorldM-scenario.goalPositionWorldM)<=cfg.goalToleranceM;
+    if collision || completed
+        [behavior,transition]=pathweaver.behavior.updateState(behavior,planner,world,scenario,collision,cfg);
+        if transition.occurred, transitions(end+1)=transition; end %#ok<AGROW>
     end
-    emergency = planner.emergencyFlag || behavior.name == "EMERGENCY_BRAKE";
-    [command, controller] = pathweaver.control.trackTrajectory( ...
-        ego, planner.selectedTrajectory, emergency, controller, cfg);
-    ego = pathweaver.control.updateBicycle(ego, command, cfg.dt, cfg);
-    [collision, collisionReason] = pathweaver.simulation.detectCollision(ego, scenario, cfg);
-
-    row = step + 1;
-    timeS(row)=ego.timestampS; positions(row,:)=ego.positionWorldM;
-    speedMps(row)=ego.speedMps; accelerationMps2(row)=ego.accelerationMps2;
-    steeringRad(row)=ego.steeringRad; riskScore(row)=planner.riskScore;
-    ttcS(row)=planner.minimumTtcS; latencyS(row)=planner.planningLatencyS;
-    curvaturePerM(row)=tan(ego.steeringRad)/cfg.ego.wheelbaseM;
-    behaviorName(row)=behavior.name;
-    selectedEndXWorldM(row)=planner.selectedTrajectory.positionsWorldM(end,1);
-    selectedEndYWorldM(row)=planner.selectedTrajectory.positionsWorldM(end,2);
-
-    frame = struct('scenario',scenario,'world',world,'ego',ego, ...
-        'predictions',predictions,'planner',planner,'behavior',behavior, ...
-        'collision',collision,'collisionReason',collisionReason);
+    planner.behaviorState=behavior.name;
+    data(step+1,:)=[ego.timestampS ego.positionWorldM ego.speedMps ego.accelerationMps2 ...
+        ego.steeringRad tan(ego.steeringRad)/cfg.ego.wheelbaseM planner.riskScore ...
+        planner.minimumTtcS planner.planningLatencyS planner.selectedTrajectory.positionsWorldM(end,:) ...
+        clearance ego.headingRad];
+    behaviorName(step+1)=behavior.name;
+    frame=struct('scenario',scenario,'world',world,'ego',ego,'predictions',predictions, ...
+        'planner',planner,'behavior',behavior,'collision',collision, ...
+        'collisionReason',collisionReason,'completed',completed,'clearanceM',clearance,'config',cfg);
     if ~isempty(callbacks.onStep), callbacks.onStep(frame); end
-    if collision || norm(ego.positionWorldM-scenario.goalPositionWorldM) <= cfg.goalToleranceM
-        break
-    end
+    if collision || completed, break; end
 end
-
-rows = 1:step+1;
-log = table(timeS(rows), positions(rows,1), positions(rows,2), speedMps(rows), ...
-    accelerationMps2(rows), steeringRad(rows), curvaturePerM(rows), ...
-    riskScore(rows), ttcS(rows), latencyS(rows), behaviorName(rows), ...
-    selectedEndXWorldM(rows), selectedEndYWorldM(rows), ...
-    'VariableNames', {'timeS','xWorldM','yWorldM','speedMps','accelerationMps2', ...
-    'steeringRad','curvaturePerM','riskScore','minimumTtcS','planningLatencyS','behavior', ...
-    'selectedEndXWorldM','selectedEndYWorldM'});
-completed = ~collision && norm(ego.positionWorldM-scenario.goalPositionWorldM) <= cfg.goalToleranceM;
-metrics = pathweaver.evaluation.computeMetrics(log, completed, collision);
-result = struct('config',cfg,'scenario',scenario,'finalEgo',ego,'log',log, ...
-    'transitions',transitions,'metrics',metrics,'completed',completed, ...
-    'collision',collision,'collisionReason',collisionReason,'lastFrame',frame);
+log=array2table(data(1:step+1,:),'VariableNames',names); log.behavior=behaviorName(1:step+1);
+planningLog=array2table(planningTimes,'VariableNames',{'timeS','latencyS'});
+metrics=pathweaver.evaluation.computeMetrics(log,completed,collision,planningLog,cfg);
+metrics.runtimeS=toc(runTimer);
+result=struct('config',cfg,'scenario',scenario,'initialScenario',initialScenario,'finalEgo',ego, ...
+    'log',log,'planningLog',planningLog,'transitions',transitions,'metrics',metrics, ...
+    'completed',completed,'collision',collision,'collisionReason',collisionReason,'lastFrame',frame);
 end

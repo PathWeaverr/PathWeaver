@@ -8,12 +8,23 @@ for k = 1:numel(world.agents)
     nearestDistance = min(nearestDistance, norm( ...
         world.agents(k).positionWorldM - world.ego.positionWorldM));
 end
-if collision
+if oldName=="COLLISION" || oldName=="GOAL_REACHED"
+    newName=oldName; reason="terminal state retained";
+elseif collision
     newName = "COLLISION"; reason = "footprint collision detected";
 elseif goalDistance <= cfg.goalToleranceM
     newName = "GOAL_REACHED"; reason = "ego entered goal region";
-elseif planner.emergencyFlag || planner.minimumTtcS < cfg.behavior.emergencyTtcS
-    newName = "EMERGENCY_BRAKE"; reason = "no safe plan or critical TTC";
+elseif planner.emergencyFlag || isnan(planner.minimumTtcS) || planner.minimumTtcS < cfg.behavior.emergencyTtcS
+    newName = "EMERGENCY_BRAKE";
+    if ~planner.selectedTrajectory.isFeasible
+        reason="no feasible candidate; braking, safety not guaranteed";
+    elseif planner.emergencyFlag
+        reason="bounded braking selected by planner";
+    elseif isnan(planner.minimumTtcS)
+        reason="TTC unavailable; fail-closed braking";
+    else
+        reason="predicted footprint contact below emergency threshold";
+    end
 elseif planner.minimumTtcS < cfg.behavior.yieldTtcS || ...
         planner.riskScore > cfg.behavior.riskYield
     newName = "YIELD"; reason = "crossing risk or TTC threshold";
@@ -49,4 +60,5 @@ if transition.occurred
     state.name = newName;
     state.lastTransitionTimeS = world.timestampS;
 end
+state.reason=reason;
 end

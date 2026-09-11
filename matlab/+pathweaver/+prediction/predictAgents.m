@@ -7,6 +7,8 @@ template = struct('agentId', 0, 'class', "", 'futureTimestampsS', [], ...
 predictions = repmat(template, 1, numel(agents));
 for a = 1:numel(agents)
     agent = agents(a);
+    assert(all(isfinite([agent.positionWorldM agent.velocityWorldMps agent.timestampS])) && ...
+        abs(agent.timestampS-currentTimeS)<1e-8,'PathWeaver:InvalidAgent','Invalid or stale actor state.');
     means = agent.positionWorldM + tau.*agent.velocityWorldMps;
     covariances = zeros(2, 2, numel(tau));
     growth = cfg.prediction.(char(agent.class));

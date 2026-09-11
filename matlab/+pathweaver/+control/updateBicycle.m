@@ -14,7 +14,7 @@ egoNext.positionWorldM = ego.positionWorldM + ...
 egoNext.headingRad = pathweaver.core.wrapAngle(ego.headingRad + ...
     ego.speedMps*tan(steering)/cfg.ego.wheelbaseM*dt);
 egoNext.speedMps = max(0, ego.speedMps + acceleration*dt);
-egoNext.accelerationMps2 = acceleration;
+egoNext.accelerationMps2 = (egoNext.speedMps-ego.speedMps)/dt;
 egoNext.steeringRad = steering;
 egoNext.timestampS = ego.timestampS + dt;
 pathweaver.core.validateEgoState(egoNext);

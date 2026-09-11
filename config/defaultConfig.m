@@ -8,6 +8,7 @@ cfg.horizon = 3.0;
 cfg.planDt = 0.20;
 cfg.maxSimulationTime = 32;
 cfg.goalToleranceM = 3;
+cfg.latencyWarmupPlans = 2;
 
 cfg.ego.lengthM = 4.2;
 cfg.ego.widthM = 1.8;
@@ -24,10 +25,10 @@ cfg.prediction.two_wheeler = [0.18 0.28];
 cfg.prediction.car = [0.10 0.16];
 cfg.prediction.animal = [0.30 0.55];
 cfg.prediction.uncertaintyBeta = 0.15;
-cfg.prediction.hardMahalanobis2 = 1.5;
 
 cfg.planner.lateralTargetsM = [-2.1 -1.05 0 1.05 2.1];
 cfg.planner.speedFractions = [1.0 0.65 0.25 0.0];
+cfg.planner.stopDurationsS = [2.2 2.6];
 cfg.planner.routeSpeedMps = 8.0;
 cfg.planner.maxJerkMps3 = 8.0;
 cfg.planner.staticMarginM = 0.35;
