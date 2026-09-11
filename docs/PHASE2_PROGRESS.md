@@ -48,5 +48,13 @@ advantage and no consistent clearance improvement. This batch is marked dirty;
 rerun from a clean release revision before publishing final evidence.
 Outputs: artifacts/evaluation (raw runs, parameters, revision, CSV/MAT, plot).
 
-Remaining: live controls and backup; sequence integration evidence; judge walkthrough;
+Live demonstration milestone: two graphics/control tests passed. Rendered .5x
+and 4x runs have identical simulated logs; pause/toggle/reset signals are tested.
+Inspected actual 1920×1080 snapshot and verified a 5.1 s / 10 fps MP4 from a
+5 s test run (frame quantisation). Controls, candidate inspection, weighted
+costs, footprint outlines, applied emergency override and TTC labels are live.
+Evidence: artifacts/phase2_controls.txt and artifacts/visual_check_v2.
+Full clean-revision backup remains to be generated after final verification.
+
+Remaining: sequence integration evidence; judge walkthrough;
 final verification and commits. Update this record at each milestone.

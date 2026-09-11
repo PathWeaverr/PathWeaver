@@ -53,6 +53,10 @@ cfg.control.integralLimit = 5;
 
 cfg.visualization.enabled = true;
 cfg.visualization.video = false;
+cfg.visualization.playbackSpeed = 1;
+cfg.visualization.startPaused = false;
+cfg.visualization.showCandidates = true;
+cfg.visualization.showUncertainty = true;
 cfg.outputDirectory = fullfile(fileparts(fileparts(mfilename('fullpath'))), 'artifacts');
 cfg.scenario = scenarioConfig();
 end

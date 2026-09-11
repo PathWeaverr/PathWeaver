@@ -57,7 +57,8 @@ for step=1:maxSteps
     behaviorName(step+1)=behavior.name;
     frame=struct('scenario',scenario,'world',world,'ego',ego,'predictions',predictions, ...
         'planner',planner,'behavior',behavior,'collision',collision, ...
-        'collisionReason',collisionReason,'completed',completed,'clearanceM',clearance,'config',cfg);
+        'collisionReason',collisionReason,'completed',completed,'clearanceM',clearance,'config',cfg, ...
+        'command',command,'emergencyOverride',emergency);
     if ~isempty(callbacks.onStep), callbacks.onStep(frame); end
     if collision || completed, break; end
 end
