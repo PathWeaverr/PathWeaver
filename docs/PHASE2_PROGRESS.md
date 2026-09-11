@@ -40,6 +40,13 @@ position offsets use a local stream and are independent of planner execution.
 Evidence: artifacts/phase2_presets.txt. Demo seed is a tuning case; evaluation
 will use disjoint seeds 27001:27010, with every outcome retained.
 
-Remaining: fair paired benchmark;
-live controls and backup; sequence integration evidence; judge walkthrough;
+Evaluation milestone: export regression passed, including timeout retention.
+Exploratory 60-run batch (27001:27010, all presets, both modes): 60 completions,
+zero collisions/timeouts/invalid runs. Risk-aware challenging mean completion
+23.565 s vs baseline 24.800 s, with lower mean integrated jerk, but no collision
+advantage and no consistent clearance improvement. This batch is marked dirty;
+rerun from a clean release revision before publishing final evidence.
+Outputs: artifacts/evaluation (raw runs, parameters, revision, CSV/MAT, plot).
+
+Remaining: live controls and backup; sequence integration evidence; judge walkthrough;
 final verification and commits. Update this record at each milestone.

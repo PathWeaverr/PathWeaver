@@ -106,3 +106,23 @@ of one MATLAB scenario family, not three RoadRunner scenes.
 The local mt19937ar scenario stream never resets global randomness. The planner
 is deterministic and uses no random stream. Physical motion depends only on
 scenario time and configuration, not ego position, planner mode or covariance.
+
+## Paired evaluation protocol
+
+Default evaluation uses 27001:27010, disjoint from demo/tuning seed 26037,
+across all three presets and both modes (60 runs). Modes receive identical
+physical states, exogenous actor timing, footprints, clearance margins,
+candidate families, horizon, costs, controller and termination rules. Only
+covariance propagation differs: baseline keeps the supplied covariance fixed;
+risk-aware grows it by class. Both use the same uncalibrated risk formula.
+There is no random planner, privileged actor schedule, or baseline handicap.
+
+Mode execution order alternates with seed parity. Every run is saved, and the
+per-run CSV/MAT is checkpointed after each result. Exceptions become explicit
+invalid rows with unavailable numerical outcomes, an error identifier and raw
+configuration. Timeouts and collisions are not discarded. Exports include
+actual scenario parameters, Git revision/dirty flag and environment inventory.
+Summary latency columns are explicitly **means of per-run means/p95s**, not
+pooled percentiles. Completion-time plots exclude non-completions but label
+their counts; outcome tables retain all runs. Zero observed collisions in this
+small scenario family does not establish safety or a general improvement.
