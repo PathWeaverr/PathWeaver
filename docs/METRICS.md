@@ -86,3 +86,23 @@ infeasibility. It must pass physical contact, road, acceleration and steering
 constraints. Only its comfort jerk threshold is soft, not a hard rejection:
 emergency stopping may be uncomfortable. Ordinary candidates retain the hard
 8 m/s³ jerk threshold. Both modes receive the identical braking option.
+
+## Reproducible village variants
+
+| Preset | Ego initial speed | Pedestrian start (x, y) | Crossing onset | Crossing speed |
+| --- | --- | --- | --- | --- |
+| nominal | 8 m/s | (49, −4.2) m | 3.65 s | 1.25 m/s |
+| challenging | 9 m/s | (47, −4.2) m | 3.00 s | 1.65 m/s |
+| emergency | 8 m/s | (25, −3.4) m | 1.00 s | 2.40 m/s |
+
+Each seed adds independent normal x offsets (σ = 0.6 m) to the pedestrian
+and two-wheeler. The latter starts at (103, 2.3) m, travelling at −5.2 m/s
+along x. Actual parameters are exported; table positions are before jitter.
+Onset means the actor starts walking continuously, not that it teleports or
+is hidden from the world model. The emergency variant tests a rapid intrusion
+with finite stopping room, not an unavoidable collision claim. All are variants
+of one MATLAB scenario family, not three RoadRunner scenes.
+
+The local mt19937ar scenario stream never resets global randomness. The planner
+is deterministic and uses no random stream. Physical motion depends only on
+scenario time and configuration, not ego position, planner mode or covariance.

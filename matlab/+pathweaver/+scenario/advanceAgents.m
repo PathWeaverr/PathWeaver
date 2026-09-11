@@ -1,16 +1,21 @@
-function scenario = advanceAgents(scenario, ego, dt, cfg)
-%ADVANCEAGENTS Advance deterministic agents without teleportation.
-pedIndex = find([scenario.agents.id] == cfg.scenario.pedestrian.id, 1);
-if ~scenario.pedestrianTriggered && ego.positionWorldM(1) >= ...
-        cfg.scenario.pedestrian.triggerEgoXM
-    scenario.pedestrianTriggered = true;
-    scenario.agents(pedIndex).velocityWorldMps = ...
-        [0 cfg.scenario.pedestrian.crossingSpeedMps];
+function scenario = advanceAgents(scenario, ~, dt, cfg)
+%ADVANCEAGENTS Exogenous clock-driven actors, independent of ego/planner mode.
+assert(isfinite(dt) && dt>=0,'PathWeaver:Timing','Actor timestep must be nonnegative.');
+start=scenario.timeS; finish=start+dt;
+onset=cfg.scenario.pedestrian.crossingStartS;
+for k=1:numel(scenario.agents)
+    if scenario.agents(k).id==cfg.scenario.pedestrian.id
+        activeDuration=max(0,finish-max(start,onset));
+        velocity=[0 cfg.scenario.pedestrian.crossingSpeedMps];
+        scenario.agents(k).positionWorldM=scenario.agents(k).positionWorldM+velocity*activeDuration;
+        if finish>=onset-1e-10
+            scenario.agents(k).velocityWorldMps=velocity;
+            scenario.pedestrianTriggered=true;
+        end
+    else
+        scenario.agents(k).positionWorldM=scenario.agents(k).positionWorldM+scenario.agents(k).velocityWorldMps*dt;
+    end
+    scenario.agents(k).timestampS=finish;
 end
-for k = 1:numel(scenario.agents)
-    scenario.agents(k).positionWorldM = scenario.agents(k).positionWorldM + ...
-        scenario.agents(k).velocityWorldMps*dt;
-    scenario.agents(k).timestampS = scenario.timeS + dt;
-end
-scenario.timeS = scenario.timeS + dt;
+scenario.timeS=finish;
 end

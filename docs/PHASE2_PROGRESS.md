@@ -33,7 +33,13 @@ exposed insufficient braking choices; retained in earlier diagnostic logs.
 Explicit bounded braking now participates in selection; its jerk is a soft
 comfort cost while all physical safety constraints remain enforced.
 
-Remaining: unified swept footprint/TTC regression; aligned loop and bounded
-fallback; three physical presets and isolated RNG; fair paired benchmark;
+Preset milestone: nominal / challenging / emergency each ran twice identically
+and completed without contact (24.25 / 25.25 / 25.20 s, seed 26037).
+Three new integration tests passed. Physical crossing is clock-driven; random
+position offsets use a local stream and are independent of planner execution.
+Evidence: artifacts/phase2_presets.txt. Demo seed is a tuning case; evaluation
+will use disjoint seeds 27001:27010, with every outcome retained.
+
+Remaining: fair paired benchmark;
 live controls and backup; sequence integration evidence; judge walkthrough;
 final verification and commits. Update this record at each milestone.
