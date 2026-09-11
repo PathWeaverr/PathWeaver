@@ -44,6 +44,7 @@ cfg.behavior.followDistanceM = 14;
 cfg.behavior.riskYield = 0.9;
 cfg.behavior.riskClear = 0.45;
 cfg.behavior.clearDwellS = 0.5;
+cfg.behavior.clearTtcMarginS = 0.8;
 
 cfg.control.lookaheadBaseM = 2.5;
 cfg.control.lookaheadGainS = 0.35;

@@ -56,5 +56,15 @@ costs, footprint outlines, applied emergency override and TTC labels are live.
 Evidence: artifacts/phase2_controls.txt and artifacts/visual_check_v2.
 Full clean-revision backup remains to be generated after final verification.
 
-Remaining: sequence integration evidence; judge walkthrough;
+Integration milestone: shared numeric behaviour kernel executes inside the
+Stateflow chart at 0.05 s. Six regression tests passed: replay build/run,
+default simulation, seven reset decisions, and ordered sequences with explicit
+initial state, emergency dwell, threshold oscillation, unavailable TTC, recovery
+and terminal memory. Sequence tests compare 186 samples of codes, reasons and
+dwell memory; reset cases add 21 samples. No warnings in the final integration
+run (artifacts/phase2_stateflow_v3.txt). The vehicle model remains explicitly
+labelled replay-only; the chart is a separate behaviour execution harness,
+not the controller of the live MATLAB demo. No RoadRunner work was attempted.
+
+Remaining: judge walkthrough and documentation consolidation;
 final verification and commits. Update this record at each milestone.

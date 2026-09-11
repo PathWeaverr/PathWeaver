@@ -1,79 +1,62 @@
-function modelPath = buildPathWeaverStateflowModel()
-%BUILDPATHWEAVERSTATEFLOWMODEL Generate and execute behaviour chart evidence.
-root=setupPath();
+function modelPath=buildPathWeaverStateflowModel()
+%BUILDPATHWEAVERSTATEFLOWMODEL Execute the shared stateful kernel in Stateflow.
+root=setupPath(); cfg=defaultConfig();
 assert(~isempty(ver('stateflow')),'PathWeaver:StateflowUnavailable','Stateflow is unavailable.');
-modelName='pathweaver_behavior';
-modelDirectory=fullfile(root,'simulink','models');
-if ~exist(modelDirectory,'dir'),mkdir(modelDirectory);end
-modelPath=fullfile(modelDirectory,[modelName '.slx']);
-if bdIsLoaded(modelName),close_system(modelName,0);end
-new_system(modelName); load_system(modelName);
-set_param(modelName,'Solver','FixedStepDiscrete','FixedStep','0.05','StopTime','0.1');
-add_block('sflib/Chart',[modelName '/PathWeaver Behaviour'], ...
-    'Position',[340 80 560 300]);
-rootObject=sfroot;
-chart=find(rootObject,'-isa','Stateflow.Chart','Path',[modelName '/PathWeaver Behaviour']);
-chart=chart(1); chart.Name='PathWeaver Behaviour';
-
-inputNames={'riskScore','minimumTtcS','emergencyFlag','goalReached', ...
-    'collisionFlag','lateralAvoid','leadDistanceM'};
-defaults=[0,10,0,0,0,0,100];
-for k=1:numel(inputNames)
-    data=Stateflow.Data(chart); data.Name=inputNames{k}; data.Scope='Input'; data.Port=k;
-    add_block('simulink/Sources/Constant',[modelName '/' inputNames{k}], ...
-        'Value',num2str(defaults(k)),'Position',[40 25+42*k 155 48+42*k]);
-    add_line(modelName,[inputNames{k} '/1'],['PathWeaver Behaviour/' num2str(k)],'autorouting','on');
-end
-output=Stateflow.Data(chart); output.Name='stateCode'; output.Scope='Output'; output.Port=1;
-add_block('simulink/Sinks/To Workspace',[modelName '/Behaviour State'], ...
-    'VariableName','pathweaverBehaviorState','SaveFormat','Array', ...
-    'Position',[650 160 780 195]);
-add_line(modelName,'PathWeaver Behaviour/1','Behaviour State/1','autorouting','on');
-
-names={'CRUISE','FOLLOW','YIELD','AVOID','EMERGENCY_BRAKE','GOAL_REACHED','COLLISION'};
-codes=0:6; positions=[20 30;200 30;380 30;20 180;200 180;380 180;560 180];
-states=cell(1,numel(names));
+model='pathweaver_behavior'; directory=fullfile(root,'simulink','models');
+if ~exist(directory,'dir'), mkdir(directory); end
+modelPath=fullfile(directory,[model '.slx']);
+if bdIsLoaded(model), close_system(model,0); end
+new_system(model); load_system(model);
+cleanup=onCleanup(@()close_system(model,0));
+set_param(model,'Solver','FixedStepDiscrete','FixedStep','0.05','StopTime','0.1');
+workspace=get_param(model,'ModelWorkspace');
+workspace.assignin('samples',[(0:.05:.1)' repmat([0 Inf 0 0 0 0 100 1],3,1)]);
+workspace.assignin('limits',pathweaver.behavior.decisionLimits(cfg));
+workspace.assignin('initialBehaviorCode',0); workspace.assignin('initialClearSinceS',NaN);
+add_block('sflib/Chart',[model '/PathWeaver Behaviour'],'Position',[340 95 620 340]);
+chart=find(sfroot,'-isa','Stateflow.Chart','Path',[model '/PathWeaver Behaviour']);
+chart=chart(1); chart.ActionLanguage='MATLAB'; chart.ChartUpdate='DISCRETE'; chart.SampleTime='0.05';
+names={'riskScore','minimumTtcS','emergencyFlag','goalReached','collisionFlag','lateralAvoid','leadDistanceM','feasible'};
 for k=1:numel(names)
-    state=Stateflow.State(chart); state.Name=names{k};
-    state.Position=[positions(k,:) 125 65];
-    state.LabelString=sprintf('%s\nentry: stateCode = %d;',names{k},codes(k));
-    states{k}=state;
+    data=Stateflow.Data(chart); data.Name=names{k}; data.Scope='Input'; data.Port=k;
+    add_block('simulink/Sources/From Workspace',[model '/' names{k}], ...
+        'VariableName',sprintf('samples(:,[1 %d])',k+1),'Interpolate','off', ...
+        'OutputAfterFinalValue','Holding final value', ...
+        'Position',[35 20+43*k 190 43+43*k]);
+    add_line(model,[names{k} '/1'],['PathWeaver Behaviour/' num2str(k)],'autorouting','on');
 end
-defaultTransition=Stateflow.Transition(chart); defaultTransition.Destination=states{1};
-defaultTransition.DestinationOClock=0;
-
-addTransition(chart,states{1},states{7},'[collisionFlag]');
-addTransition(chart,states{1},states{6},'[goalReached && !collisionFlag]');
-addTransition(chart,states{1},states{5},'[emergencyFlag || minimumTtcS < 0.75]');
-addTransition(chart,states{1},states{3},['[!emergencyFlag && minimumTtcS >= 0.75 && ' ...
-    '(minimumTtcS < 3.5 || riskScore > 0.9)]']);
-addTransition(chart,states{1},states{4},['[minimumTtcS >= 3.5 && riskScore <= 0.9 && ' ...
-    'lateralAvoid]']);
-addTransition(chart,states{1},states{2},['[minimumTtcS >= 3.5 && riskScore <= 0.9 && ' ...
-    '!lateralAvoid && leadDistanceM < 14]']);
-for sourceIndex=2:5
-    addTransition(chart,states{sourceIndex},states{7},'[collisionFlag]');
-    addTransition(chart,states{sourceIndex},states{6},'[goalReached && !collisionFlag]');
-    addTransition(chart,states{sourceIndex},states{5}, ...
-        '[emergencyFlag || minimumTtcS < 0.75]');
-    if sourceIndex~=3
-        addTransition(chart,states{sourceIndex},states{3}, ...
-            '[minimumTtcS >= 0.75 && (minimumTtcS < 3.5 || riskScore > 0.9)]');
-    end
-    addTransition(chart,states{sourceIndex},states{1}, ...
-        ['[!emergencyFlag && minimumTtcS >= 3.5 && riskScore < 0.45 && ' ...
-        '!lateralAvoid && leadDistanceM >= 14]']);
+data=Stateflow.Data(chart); data.Name='timeS'; data.Scope='Input'; data.Port=9;
+add_block('simulink/Sources/Digital Clock',[model '/Simulation clock'], ...
+    'SampleTime','0.05','Position',[35 425 190 450]);
+add_line(model,'Simulation clock/1','PathWeaver Behaviour/9','autorouting','on');
+for name={'limits','initialBehaviorCode','initialClearSinceS'}
+    data=Stateflow.Data(chart); data.Name=name{1}; data.Scope='Parameter';
 end
-save_system(modelName,modelPath);
-set_param(modelName,'SimulationCommand','update');
-simulationOutput=sim(modelName);
-assignin('base','pathweaverBehaviorState',simulationOutput.pathweaverBehaviorState);
-save_system(modelName,modelPath); close_system(modelName,0);
-fprintf('Built and ran %s\n',modelPath);
+outputNames={'stateCode','clearSinceS','reasonCode'};
+initials={'0','NaN','0'};
+logNames={'pathweaverBehaviorState','pathweaverClearSince','pathweaverReasonCode'};
+for k=1:3
+    data=Stateflow.Data(chart); data.Name=outputNames{k}; data.Scope='Output'; data.Port=k;
+    data.Props.InitialValue=initials{k};
+    add_block('simulink/Sinks/To Workspace',[model '/' outputNames{k}], ...
+        'VariableName',logNames{k},'SaveFormat','Array','Position',[735 80+80*k 900 110+80*k]);
+    add_line(model,['PathWeaver Behaviour/' num2str(k)],[outputNames{k} '/1'],'autorouting','on');
 end
-
-function addTransition(chart,source,destination,label)
-transition=Stateflow.Transition(chart);
-transition.Source=source; transition.Destination=destination;
-transition.LabelString=label;
+state=Stateflow.State(chart); state.Name='ExecuteReference'; state.Position=[60 50 620 180];
+step=sprintf(['[stateCode, clearSinceS, reasonCode] = pathweaver.behavior.stepDecision( ...\n' ...
+    'stateCode, clearSinceS, timeS, riskScore, minimumTtcS, emergencyFlag, feasible, ...\n' ...
+    'goalReached, collisionFlag, lateralAvoid, leadDistanceM, limits);']);
+state.LabelString=sprintf(['ExecuteReference\nentry:\n' ...
+    'stateCode = initialBehaviorCode;\nclearSinceS = initialClearSinceS;\n%s\nduring:\n%s'],step,step);
+transition=Stateflow.Transition(chart); transition.Destination=state; transition.DestinationOClock=0;
+note=Simulink.Annotation(model,sprintf(['SIMULATION-TIME BEHAVIOUR EXECUTION, 0.05 s\n' ...
+    'Stateful shared MATLAB kernel compiled inside Stateflow; seven numeric behaviour codes.\n' ...
+    'Test-input harness only: no perception, planner, controller or vehicle dynamics execute here.']));
+note.Position=[40 485 930 555];
+set_param(model,'SimulationCommand','update');
+out=sim(model);
+assert(~isempty(out.pathweaverBehaviorState),'PathWeaver:EmptyStateflowRun','No behaviour output.');
+save_system(model,modelPath);
+clear cleanup
+fprintf('Built and ran behaviour execution harness: %s\n',modelPath);
 end
