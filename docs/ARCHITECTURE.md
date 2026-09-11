@@ -1,121 +1,107 @@
 # Architecture
 
-## Honest scope
-
+PathWeaver is a MATLAB-first closed loop, not a sensor-processing system.
 PathWeaver v0.1 consumes simulated world-state data. Multi-sensor perception,
 detection and sensor fusion are planned for later versions and are not claimed
 by this prototype.
 
-This architecture is implemented by the MATLAB closed loop. The Simulink model
-is a generated replay integration boundary. A generated Stateflow chart verifies
-direct behaviour decisions, while the closed loop retains MATLAB dwell memory.
-
-## Data flow
+## Execution flow
 
 ```mermaid
 flowchart LR
-    S[Village scenario] --> A[Scenario / perception adapter]
-    A --> W[World model]
+    A[Scripted scenario actors] --> W[World-state adapter]
+    E[Ego state] --> W
     W --> P[Class-conditioned prediction]
-    P --> R[Time-indexed risk]
-    W --> B[Behaviour state machine]
-    R --> B
-    W --> T[Candidate trajectory planner]
-    R --> T
-    B --> T
-    T --> C[Closed-loop controller]
-    C --> V[Kinematic bicycle dynamics]
-    V --> A
-    T --> M[Metrics and logging]
-    V --> M
-    P --> Z[Technical visualisation]
-    T --> Z
-    M --> Z
+    P --> T[Candidate generation, risk and constraints]
+    W --> T
+    T --> B[Behaviour and emergency memory]
+    B --> C[Trajectory tracking and brake override]
+    T --> C
+    C --> V[Kinematic bicycle step]
+    V --> E
+    T --> D[Live diagnostics]
+    P --> D
+    V --> M[Observed contact and measured metrics]
+    M --> D
 ```
 
-The adapter is the sole producer of the world-state contract. A future fused
-track source can replace scenario truth without changing prediction or planning.
+At time t, actor and ego snapshots are aligned. Prediction and candidate
+selection run every 0.15 s; behaviour and control run every 0.05 s. The controller
+advances the ego while exogenous actors advance over the same interval.
+Swept contact is checked before logging/rendering the next state. Prediction
+knots are 0.2 s apart over a 3 s horizon. The view identifies the last plan's age.
+Display pacing does not advance simulation time.
 
-## Package ownership
+## Ownership
 
-| Package | Responsibility | Must not own |
-|---|---|---|
-| `scenario` | road geometry, deterministic actors, adapter | planning policy |
-| `core` | contracts, validation, geometry utilities | scenario behaviour |
-| `prediction` | future agent distributions | ego control |
-| `planning` | risk, candidates, constraints, costs | plotting |
-| `behavior` | discrete state and hysteresis | dynamics integration |
-| `control` | tracking commands and bicycle update | scenario scripts |
-| `simulation` | loop ordering, replay, log assembly | planner mathematics |
-| `visualization` | read-only rendering and video | telemetry synthesis |
-| `evaluation` | metrics, seed sweeps, exports | production state |
+| Package | Owns |
+| --- | --- |
+| `scenario` | Road, clock-driven actors, isolated seeded randomness, adapter |
+| `core` | Validation, covering footprints, swept geometry |
+| `prediction` | Mean motion and world-frame covariance |
+| `planning` | Candidates, time-indexed risk, constraints, cost decomposition |
+| `behavior` | Shared numeric decision kernel, state memory and transition reasons |
+| `control` | Trajectory tracking, actuator bounds and bicycle integration |
+| `simulation` | Fixed-step orchestration, logs, replay input |
+| `visualization` | Rendering and recording actual state; display-only controls |
+| `evaluation` | Metric definitions, paired runs, exports and provenance |
 
-## Coordinate frames and units
+There is no global RNG reset, base-workspace dependency in the core, plotting
+inside the planner, or preset-name branch inside the controller.
 
-The world frame is right-handed in the road plane. `xWorld` is longitudinal in
-the nominal forward direction; `yWorld` is lateral left; heading is radians from
-positive x toward positive y. Ego-frame x is forward and ego-frame y is left.
-Transforms must be named explicitly.
+## Coordinates and contracts
 
-Internal units are metres, seconds, metres/second, metres/second squared,
-radians, radians/metre curvature, and metres squared covariance. Kilometres/hour
-is presentation-only. Covariances are expressed in the world frame unless a
-field name states otherwise.
+x is world-forward metres; y is lateral-left metres. Heading is counterclockwise
+from +x, in radians. Speed is m/s, acceleration m/s², curvature 1/m, steering
+radians, timestamps seconds and covariance m². km/h appears only in presentation.
+The virtual bicycle reference point is also the body centre; see
+[geometry conventions](METRICS.md) for this deliberate simplification.
 
-## Contracts
+Contracts are plain structures:
 
-Contracts should be scalar MATLAB structures validated by pure functions.
+| Contract | Implemented fields |
+| --- | --- |
+| EgoState | `positionWorldM` (1×2), `headingRad`, `speedMps`, `accelerationMps2`, `steeringRad`, `timestampS` |
+| AgentState | `id`, `class`, `positionWorldM`, `velocityWorldMps`, `headingRad`, `collisionRadiusM`, `positionCovarianceWorldM2` (2×2), `timestampS` |
+| StaticObstacle | `id`, `geometryType`, `positionWorldM`, `geometry.radiusM`, `obstacleType`; circle geometry only |
+| PredictedState | One structure per agent: `agentId`, `class`, `futureTimestampsS` (N×1), `expectedPositionsWorldM` (N×2), `positionCovariancesWorldM2` (2×2×N), `collisionRadiusM` |
+| CandidateTrajectory | `timestampsS`, `positionsWorldM`, `headingsRad`, `speedsMps`, `accelerationsMps2`, `curvaturesPerM`, `costTerms`, `weightedCostTerms`, `totalCost`, `isFeasible`, `isEmergencyBraking`, `rejectionReason` |
+| PlannerOutput | Selected/all candidates, `planningLatencyS`, `riskScore`, `minimumTtcS`, `behaviorState`, `emergencyFlag`; loop adds `timestampS` |
 
-### EgoState
+World-state includes ego, agents, static obstacles, timestamp and source label.
+Prediction rejects stale actor timestamps; risk scoring rejects mismatched time
+grids instead of silently pairing different times.
 
-`positionWorldM` (1x2), `headingRad`, `speedMps`, `accelerationMps2`,
-`steeringRad`, `timestampS`.
+Results retain configuration, initial/final scenario, ego log, per-planning-call
+latency log, transitions, metrics and final diagnostic frame. Demo results add
+source provenance. They do not store every candidate or actor at every tick:
+the deterministic scenario/configuration can regenerate these. Latency and
+render timing are inherently nondeterministic and excluded from replay equality.
 
-### AgentState
+## What executes in MathWorks tools
 
-`id`, `class` (`pedestrian`, `two_wheeler`, `car`, `animal`),
-`positionWorldM` (1x2), `velocityWorldMps` (1x2), `headingRad`, dimensions or
-`collisionRadiusM`, `positionCovarianceWorldM2` (2x2), `timestampS`.
+| Entry point | Execution |
+| --- | --- |
+| `runPathWeaverDemo` | MATLAB prediction, planning, behaviour, control and vehicle motion in closed loop |
+| `buildPathWeaverModel` | Generates `pathweaver_v0.slx`; recorded MATLAB signals pass through explicitly labelled replay blocks |
+| `buildPathWeaverStateflowModel` | Generates `pathweaver_behavior.slx`; the shared stateful behaviour kernel executes inside Stateflow at 0.05 s |
 
-### StaticObstacle
+The Stateflow harness has one execution state and seven numeric behaviour codes.
+It is not a graphical seven-state transition network. Its chart compiles and
+calls the same pure `stepDecision` function as the MATLAB adapter, retaining
+state and dwell memory between samples. Defined ordered sequences test outputs,
+reasons, memory, initialization and recovery. This does **not** establish full
+closed-loop MATLAB/Simulink equivalence. The live demo remains MATLAB-controlled.
 
-`id`, `geometryType`, `positionWorldM`, `geometry`, `obstacleType`. Geometry is
-either circle radius or a consistently wound polygon.
+Both builders use model workspaces, not caller base-workspace variables.
+Replay exposes ego x/y/speed, selected endpoint x/y, behaviour code, risk and
+availability flags. Initial unavailable values remain NaN, not fabricated zeros.
 
-### PredictedState
+## Next integration boundary
 
-`agentId`, `futureTimestampS`, `expectedPositionWorldM`,
-`positionCovarianceWorldM2`, footprint, and occupancy parameters. A prediction
-is an ordered array sharing the candidate time grid.
-
-### CandidateTrajectory
-
-Ordered `timestampsS`, `positionsWorldM`, `headingsRad`, `speedsMps`,
-`accelerationsMps2`, `curvaturesPerM`; named `costTerms`; `totalCost`,
-`isFeasible`, and `rejectionReason`.
-
-### PlannerOutput
-
-`selectedTrajectory`, all `candidateTrajectories`, measured `planningLatencyS`,
-`riskScore`, `minimumTtcS`, `behaviorState`, and `emergencyFlag`.
-
-## Timing semantics
-
-Target integration step is 0.05 s, replan interval 0.15 s, prediction/candidate
-step 0.20 s, and horizon 3.0 s. Actor truth advances to time `t` before the
-adapter snapshots it. Prediction and planning use that same timestamp. The
-controller command applies over `[t,t+dt)`. Planner wall time is measured with
-`tic/toc` and never substituted for simulation time.
-
-Replay records configuration, seed, initial state, actor state at each tick,
-planner outputs, controls, and next ego state. Determinism is checked within
-documented floating-point tolerances, not byte identity of figures.
-
-## Extension points
-
-- Replace the scenario adapter with timestamped fused tracks.
-- Replace constant velocity with a learned predictor while retaining predicted
-  distribution contracts.
-- Add a RoadRunner adapter after native APIs are detected.
-- Wrap shared MATLAB System blocks or functions in a generated Simulink model.
-- Migrate behaviour to Stateflow only after transition equivalence tests exist.
+Replace the ground-truth adapter with timestamped sensor tracks carrying IDs,
+class, state, footprint and covariance. That requires additional handling for
+latency, missed detections, track lifecycle and calibration; it is not a drop-in
+claim that sensors already work. Native RoadRunner needs a supported licensed
+host, coordinate/time validation and an ego-control bridge. See
+[RoadRunner port](ROADRUNNER_PORT.md) and [limitations](LIMITATIONS.md).

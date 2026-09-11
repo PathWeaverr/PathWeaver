@@ -1,58 +1,54 @@
-# Environment preflight
+# Verified environment
 
-Preflight date: 2026-09-03
+Verification date: 12 September 2026 (Asia/Kolkata).
 
-Host: Apple-silicon (`arm64`) macOS 26.5.1, timezone Asia/Kolkata
+| Item | Observed |
+| --- | --- |
+| MATLAB | 26.1.0.3346908, R2026a Update 5 |
+| Host | Apple-silicon macOS 26.5.1, build 25F80; MATLAB architecture `maca64` |
+| Core execution | MATLAB closed-loop simulation, tests, graphics and MP4 encoding executed |
+| Simulink | Replay model builds, updates and runs |
+| Stateflow | Shared behaviour kernel compiles/runs; reset and ordered-sequence tests executed |
+| RoadRunner | MATLAB API resolves; no native application or integration verified |
 
-MATLAB was installed using the official MathWorks Package Manager at:
+## Installed inventory
 
-```text
-/Users/shivamkumar/Applications/MathWorks/R2026a.app
+All nine products report version 26.1:
+
+MATLAB; Simulink; Stateflow; Automated Driving Toolbox; Navigation Toolbox;
+Vehicle Dynamics Blockset; Computer Vision Toolbox; Sensor Fusion and Tracking
+Toolbox; Image Processing Toolbox.
+
+Installed does not mean used or licensed for every possible API. MATLAB,
+Simulink and Stateflow were exercised by this release. The numerical core does
+not require the other toolboxes. No sensor or vehicle-blockset capability is
+claimed merely because its product is installed.
+
+## API and licence evidence
+
+`RandStream`, `VideoWriter`, `getframe`, `drivingScenario`, `roadrunner`,
+`sim`, `sfroot` and `Simulink.SimulationInput` resolve locally. Stateflow's
+dynamic chart classes are verified by the actual builder; a standalone
+`which('Stateflow.Chart')` lookup does not resolve them.
+
+Installed MathWorks help was used to verify `SimulationInput.setVariable`
+and `setModelParameter` signatures. The runtime inventory records version,
+products, API lookups and active licence feature names, not licence identifiers.
+
+From the repository in MATLAB:
+
+```matlab
+setupPath
+info = pathweaver.evaluation.environmentInfo;
+disp(info)
+disp(struct2table(ver))
+disp(license('inuse'))
 ```
 
-Batch launch and online licensing were verified. MATLAB reports
-`26.1.0.3346908 (R2026a) Update 5`.
+Use the normal licensed MATLAB application or its `bin/matlab -batch`
+executable. The development sandbox could not launch Qt/CPU detection correctly;
+the same batch commands succeeded under approved normal execution. This is not
+a MATLAB numerical test failure.
 
-## Installed products
-
-All report version 26.1:
-
-- MATLAB
-- Simulink
-- Automated Driving Toolbox
-- Navigation Toolbox
-- Stateflow
-- Vehicle Dynamics Blockset
-- Computer Vision Toolbox
-- Sensor Fusion and Tracking Toolbox
-- Image Processing Toolbox (dependency)
-
-Licence probes returned true for MATLAB, Simulink, Automated Driving Toolbox,
-Navigation Toolbox, Stateflow, and Vehicle Dynamics Blockset. The Computer Vision
-feature-name probe returned false despite installation; the Sensor Fusion name
-exceeded the `license` function's length limit. Neither is used by the prototype.
-
-## API checks
-
-| API | Observed result |
-|---|---|
-| `drivingScenario` | found in shared driving-scenario package |
-| `road`, `vehicle` | found as `drivingScenario` methods |
-| `pedestrian`, `trajectory` | no standalone function found |
-| `birdsEyePlot` | found in Automated Driving Toolbox |
-| `sim`, `new_system` | found as Simulink builtins |
-| `sfroot` | found in Stateflow |
-| `roadrunner` | MATLAB API found |
-
-No RoadRunner application bundle exists. MathWorks lists RoadRunner as
-[unsupported and unavailable for macOS](https://www.mathworks.com/support/requirements/roadrunner.html);
-the API alone cannot provide integration.
-
-## Verification command
-
-```sh
-/Users/shivamkumar/Applications/MathWorks/R2026a.app/bin/matlab -batch \
-  "disp(version); disp(ver); disp(license('inuse'));"
-```
-
-Installed toolbox presence does not imply that a capability is claimed.
+RoadRunner installation and sensor integration were intentionally not attempted
+for this release. See [RoadRunner port](ROADRUNNER_PORT.md).

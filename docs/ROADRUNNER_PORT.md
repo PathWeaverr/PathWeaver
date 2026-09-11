@@ -4,10 +4,9 @@ The RoadRunner MATLAB API is present, but its application is absent. No
 `.rrscene`, project, screenshot, or recording has been fabricated. The MATLAB
 scenario is runnable; this checklist is for a later complete installation.
 
-RoadRunner cannot be installed on this development Mac because MathWorks does
-not [support RoadRunner on macOS](https://www.mathworks.com/support/requirements/roadrunner.html).
-Perform the following steps on a compatible Windows or Ubuntu workstation with
-the required entitlement.
+This release does not install or connect RoadRunner. Perform the following
+steps on a supported workstation with the required entitlement, after checking
+the installed release's local platform/compatibility documentation.
 
 ## Automated checks before GUI work
 
@@ -22,14 +21,15 @@ the required entitlement.
 
 1. Create a project under `roadrunner/projects/pathweaver_v0` only after the tool
    selects/creates its valid source structure.
-2. Build 120–180 m of unmarked asphalt following the MATLAB centre reference,
+2. Build 135 m of unmarked asphalt following the MATLAB centre reference,
    with the same sampled left/right drivable boundaries and no lane markings.
 3. Add modest shoulder/terrain context without changing collision geometry.
 4. Place the pothole/obstruction using the same world coordinates and footprint.
 5. Add ego, pedestrian, and two-wheeler assets; record asset substitutions and
    preserve stable actor names/IDs.
-6. Recreate initial poses, speeds, pedestrian approach trigger, deterministic
-   sequence, and goal marker from scenario configuration.
+6. Recreate initial poses, speeds, clock-driven crossing onset, deterministic
+   sequence, and goal marker from scenario configuration. Use the actual seeded
+   parameters in the saved initial scenario, not just unperturbed nominal values.
 7. Establish the supported MATLAB/Simulink connection and map actor truth into
    the documented world-state adapter. Keep coordinates and timestamps explicit.
 8. Drive ego from PathWeaver control output; do not keyframe a safe path.

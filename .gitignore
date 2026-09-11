@@ -14,8 +14,10 @@ artifacts/*
 !artifacts/.gitkeep
 media/*.mp4
 media/*.avi
-*.mat
-*.csv
+*_rtw/
+matlab_crash_dump.*
+java.log.*
+hs_err_pid*.log
 
 # Platform and editor metadata
 .DS_Store
