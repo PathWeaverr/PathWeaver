@@ -8,6 +8,9 @@ for k=1:n
     r=results(results.preset==presets(k),:);
     for metric=1:2
         ax=nexttile(layout,k+(metric-1)*n); hold(ax,'on');
+        % Export contrast must not depend on the user's MATLAB desktop theme.
+        set(ax,'Color','w','XColor',[.15 .15 .15],'YColor',[.15 .15 .15], ...
+            'GridColor',[.55 .55 .55]);
         if metric==1, field='minimumClearanceM'; label='Minimum conservative clearance (m)';
         else, field='timeToGoalS'; label='Completion time (s; completions only)'; end
         for seed=unique(r.seed)'
@@ -22,11 +25,12 @@ for k=1:n
         end
         if metric==1, yline(ax,0,':','contact','Color',[.65 .15 .15]); end
         xlim(ax,[.6 2.4]); xticks(ax,[1 2]); xticklabels(ax,{'Baseline','Risk-aware'});
-        ylabel(ax,label); grid(ax,'on');
-        title(ax,sprintf('%s | n=%d; non-completions=%d',presets(k),height(r),sum(r.status~="goal_reached")));
+        ylabel(ax,label,'Color',[.15 .15 .15]); grid(ax,'on');
+        title(ax,sprintf('%s | n=%d; non-completions=%d',presets(k),height(r),sum(r.status~="goal_reached")), ...
+            'Color',[.15 .15 .15]);
     end
 end
-title(layout,'Paired simulation evidence — not a road-safety validation');
-exportgraphics(fig,fullfile(outputDirectory,'evaluation_summary.png'));
+title(layout,'Paired simulation evidence — not a road-safety validation','Color',[.15 .15 .15]);
+exportgraphics(fig,fullfile(outputDirectory,'evaluation_summary.png'),'BackgroundColor','white');
 clear cleanup
 end
