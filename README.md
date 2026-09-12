@@ -81,6 +81,13 @@ families, collision constraints and control.
 
 ## Verification and recording
 
+The Phase 2 release passed **39 tests** and completed **60 paired simulation
+runs** across three presets without observed collisions. Both modes completed
+all runs; this sample does not demonstrate collision reduction or road safety.
+The [release report](docs/RELEASE.md) records the exact revision, measured
+trade-offs and limitations. A verified 24.3-second backup video can be regenerated
+with the command below.
+
 ```matlab
 % Full unit/integration suite:
 runPathWeaverTests;
